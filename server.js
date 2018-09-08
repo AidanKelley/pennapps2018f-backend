@@ -14,10 +14,10 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use((req, res, next) => {
     if(req.hasOwnProperty("query")) {
         if(req.hasOwnProperty("body")) {
-            req.body = {...req.query};
+            req.body = {...req.body, ...req.query};
         }
         else {
-            req.body = {...req.body, ...req.query};
+            req.body = {...req.query};
         }
     }
 

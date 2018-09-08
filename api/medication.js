@@ -6,8 +6,9 @@ module.exports = (client) => {
 
     router.post("/medication", (req, res) => {
         console.log("here");
-        if(req.token) {// === "provider") { //todo
+        if(req.token === "provider") {
             if (req.hasOwnProperty("body") &&
+                req.body.hasOwnProperty("username") &&
                 req.body.hasOwnProperty("brandName") &&
                 req.body.hasOwnProperty("genericName") &&
                 req.body.hasOwnProperty("description") &&
@@ -18,13 +19,14 @@ module.exports = (client) => {
                 req.body.hasOwnProperty("endTimeH") &&
                 req.body.hasOwnProperty("endTimeM")
             ) {
+
                 let attempts = 0;
                 function tryPut() {
                     let id = generateId(8);
                     const item = {
                         id: id,
-                        username: req.token.username,
-                        usernameLower: req.token.username.toLowerCase(),
+                        username: req.body.username,
+                        usernameLower: req.body.username.toLowerCase(),
                         brandName: req.body.brandName,
                         genericName: req.body.genericName,
                         description: req.body.description,
@@ -83,7 +85,6 @@ module.exports = (client) => {
             }
             else if(req.token.role === "provider") {
                 if(req.hasOwnProperty("body") && req.body.hasOwnProperty("username")) {
-                    //todo: verify the provider can access the patient
                     username = req.body.username;
                 }
                 else {
@@ -104,21 +105,6 @@ module.exports = (client) => {
                 return;
             }
 
-            const keys = [
-                "id",
-                "username",
-                "tries",
-                "takenHistory",
-                "brandName",
-                "genericName",
-                "description",
-                "instructions",
-                "days",
-                "startTimeH",
-                "startTimeM",
-                "endTimeH",
-                "endTimeM",
-            ];
             client.query({
                 TableName: "Medications",
                 IndexName: "usernameLowerIndex",
@@ -127,7 +113,7 @@ module.exports = (client) => {
                     ":l": username.toLowerCase()
                 },
                 Limit: 64,
-                ProjectionExpression: "brandName, genericName, description, instructions, days," +
+                ProjectionExpression: "id, brandName, genericName, description, instructions, days," +
                     "startTimeH, startTimeM, endTimeH, endTimeM, tries, takenHistory"
             }).promise().then(data => {
                 if(data.hasOwnProperty("Items") && data.Items.length > 0) {

@@ -13,6 +13,8 @@ module.exports = (client) => {
     api.use(loginRouter);
     api.use(require("./auth"));
     api.use(require("./medication")(client));
+    api.use(require("./take")(client));
+    api.use(require("./authProvider")(client));
     console.log(api);
 
     return api;

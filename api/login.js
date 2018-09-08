@@ -7,6 +7,8 @@ module.exports = (client) => {
     let router = express.Router();
 
     router.post("/login", (req, res) => {
+        console.log("body");
+        console.log(req.body);
         if(req.hasOwnProperty("body") && req.body.hasOwnProperty("username") && req.body.hasOwnProperty("password")) {
             const username = req.body.username, password = req.body.password;
 
@@ -119,9 +121,10 @@ module.exports = (client) => {
 
                         let item = {
                             usernameLower: username.toLowerCase(),
-                                role: role,
-                                passwordHash: hash,
-                                name: name
+                            role: role,
+                            passwordHash: hash,
+                            name: name,
+                            history: []
                         };
 
                         if(role === "provider") {
@@ -158,10 +161,6 @@ module.exports = (client) => {
         else {
             res.status(400).json({err: {code: "form"}});
         }
-    });
-
-    router.post("/auth-provider", (req, res) => {
-        //todo: allows the patient to authorize a provider
     });
 
     return router;
