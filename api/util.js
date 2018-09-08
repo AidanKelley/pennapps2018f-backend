@@ -9,6 +9,18 @@ function generateId(length) {
     return out;
 }
 
+function limitProperties(obj, keys) {
+    let out = {...obj};
+    for(key of Object.keys(obj)) {
+        if(keys.indexOf(key) < 0) {
+            delete out[key];
+        }
+    }
+
+    return out;
+}
+
 module.exports = {
-    generateId
+    generateId,
+    limitProperties
 };

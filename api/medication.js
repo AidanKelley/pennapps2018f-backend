@@ -72,6 +72,112 @@ module.exports = (client) => {
         }
     });
 
+
+    router.get("/medication", (req, res) => {
+        console.log("her");
+        if(req.hasOwnProperty("token") && req.token.hasOwnProperty("username")) {
+            let username = "";
+
+            if(req.token.role === "patient") {
+                username = req.token.username;
+            }
+            else if(req.token.role === "provider") {
+                if(req.hasOwnProperty("body") && req.body.hasOwnProperty("username")) {
+                    //todo: verify the provider can access the patient
+                    username = req.body.username;
+                }
+                else {
+                    res.status(400).json({
+                        err: {
+                            code: "form"
+                        }
+                    });
+                    return;
+                }
+            }
+            else {
+                res.status(500).json({
+                    err: {
+                        code: "server"
+                    }
+                });
+                return;
+            }
+
+            const keys = [
+                "id",
+                "username",
+                "tries",
+                "takenHistory",
+                "brandName",
+                "genericName",
+                "description",
+                "instructions",
+                "days",
+                "startTimeH",
+                "startTimeM",
+                "endTimeH",
+                "endTimeM",
+            ];
+            client.query({
+                TableName: "Medications",
+                IndexName: "usernameLowerIndex",
+                KeyConditionExpression: "usernameLower = :l",
+                ExpressionAttributeValues: {
+                    ":l": username.toLowerCase()
+                },
+                Limit: 64,
+                ProjectionExpression: "brandName, genericName, description, instructions, days," +
+                    "startTimeH, startTimeM, endTimeH, endTimeM, tries, takenHistory"
+            }).promise().then(data => {
+                if(data.hasOwnProperty("Items") && data.Items.length > 0) {
+                    let medications = [];
+
+                    for(let item of data.Items) {
+                        const medication = {
+                            id: item.id,
+                            brandName: item.brandName,
+                            genericName: item.genericName,
+                            description: item.description,
+                            instructions: item.instructions,
+                            days: item.days,
+                            startTimeH: item.startTimeH,
+                            startTimeM: item.startTimeM,
+                            endTimeH: item.endTimeH,
+                            endTimeM: item.endTimeM,
+                            tries: item.tries,
+                            takenHistory: item.takenHistory
+                        };
+
+                        medications.push(medication);
+                    }
+
+                    res.status(200).json({medications});
+                }
+                else {
+                    res.status(200).json({
+                        medications: []
+                    });
+                }
+            }).catch(err => {
+                console.log(err);
+
+                res.status(500).json({
+                    err: {
+                        code: "server"
+                    }
+                });
+            });
+        }
+        else {
+            res.status(500).json({
+                err: {
+                    code: "server"
+                }
+            });
+        }
+    });
+
     // router.get("/medication/:id")
 
     return router;
