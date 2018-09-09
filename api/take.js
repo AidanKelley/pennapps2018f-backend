@@ -24,7 +24,6 @@ module.exports = (client) => {
             }).promise().then(data => {
                 res.status(200).json({ok: 1});
             }).catch(err => {
-                console.log(err);
                 res.status(400).json({
                     err: {
                         code: "id"
@@ -76,7 +75,6 @@ module.exports = (client) => {
             }).promise().then(data => {
                 res.status(200).json({ok: 1});
             }).catch(err => {
-                console.log(err);
                 res.status(400).json({
                     err: {
                         code: "id"

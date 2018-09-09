@@ -5,8 +5,7 @@ module.exports = (client) => {
     let router = express.Router();
 
     router.post("/medication", (req, res) => {
-        console.log("here");
-        if(req.token === "provider") {
+        if(req.token.role === "provider") {
             if (req.hasOwnProperty("body") &&
                 req.body.hasOwnProperty("username") &&
                 req.body.hasOwnProperty("brandName") &&
@@ -40,8 +39,6 @@ module.exports = (client) => {
                         takenHistory: []
                     };
 
-                    console.log(item);
-
                     client.put({
                         TableName: "Medications",
                         Item: item,
@@ -57,7 +54,6 @@ module.exports = (client) => {
                             tryPut();
                         }
                         else {
-                            console.log(err);
                             res.status(500).json({err: {code: "unknown"}});
                         }
                     });
@@ -76,7 +72,6 @@ module.exports = (client) => {
 
 
     router.get("/medication", (req, res) => {
-        console.log("her");
         if(req.hasOwnProperty("token") && req.token.hasOwnProperty("username")) {
             let username = "";
 
@@ -146,7 +141,6 @@ module.exports = (client) => {
                     });
                 }
             }).catch(err => {
-                console.log(err);
 
                 res.status(500).json({
                     err: {

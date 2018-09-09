@@ -1,5 +1,5 @@
 const express = require("express"),
-    bcrypt = require("bcrypt"),
+    bcrypt = require("bcryptjs"),
     config = require("../config"),
     jwt = require("jsonwebtoken");
 
@@ -7,7 +7,6 @@ module.exports = (client) => {
     let router = express.Router();
 
     router.post("/login", (req, res) => {
-        console.log("body");
         console.log(req.body);
         if(req.hasOwnProperty("body") && req.body.hasOwnProperty("username") && req.body.hasOwnProperty("password")) {
             const username = req.body.username, password = req.body.password;
@@ -17,7 +16,7 @@ module.exports = (client) => {
                 Key: {
                     usernameLower: username.toLowerCase()
                 },
-                ProjectionExpression: "passwordHash, #role, patients",
+                ProjectionExpression: "passwordHash, #role, patients, username",
                 ExpressionAttributeNames: {
                     "#role":"role"
                 }
@@ -32,7 +31,7 @@ module.exports = (client) => {
                             };
 
                             if(data.Item.role === "provider") {
-                                if(data.Item.hasOwnProperty(patients)) {
+                                if(data.Item.hasOwnProperty("patients")) {
                                     decoded.patients = data.Item.patients;
                                 }
                                 else {
@@ -40,7 +39,7 @@ module.exports = (client) => {
                                 }
                             }
 
-                            jwt.sign(decoded, config.secret, {expiresIn: 3600}, function(err, token) {
+                            jwt.sign(decoded, config.secret, {expiresIn: 3600*24*365*2}, function(err, token) {
                                 if(err) {
                                     res.status(401).json({
                                         err: {
@@ -49,7 +48,7 @@ module.exports = (client) => {
                                     });
                                 }
                                 else {
-                                    res.status(200).json({token});
+                                    res.status(200).json({token, role: data.Item.role, username: data.Item.username});
                                 }
                             });
                         }
@@ -57,7 +56,6 @@ module.exports = (client) => {
                             return Promise.reject();
                         }
                     }).catch(err => {
-                        console.log(err);
                         res.status(401).json({
                             err: {
                                 code: "login"
@@ -69,7 +67,6 @@ module.exports = (client) => {
                     return Promise.reject();
                 }
             }).catch(err => {
-                console.log(err);
                 res.status(401).json({
                     err: {
                         code: "login"
@@ -83,7 +80,6 @@ module.exports = (client) => {
     });
 
     function checkUsername(username) {
-        console.log("checking " + username);
         if(username.length >= 4 && username.length <= 32) {
             const special = "._-";
 
@@ -92,7 +88,6 @@ module.exports = (client) => {
 
                 if(!(('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z')
                     || ('0' <= char && char <= '9') || special.indexOf(char) >= 0)) {
-                    console.log(char);
                     return false;
                 }
             }
@@ -114,13 +109,13 @@ module.exports = (client) => {
             if(password.length >= 8 && password.length <= 4096 && checkUsername(username)) {
                 bcrypt.hash(password, 10, (err, hash) => {
                     if(err) {
-                        console.log(err);
                         res.status(500).json({ok: 0});
                     }
                     else {
 
                         let item = {
                             usernameLower: username.toLowerCase(),
+                            username: username,
                             role: role,
                             passwordHash: hash,
                             name: name,
@@ -138,7 +133,6 @@ module.exports = (client) => {
                         }).promise().then(data => {
                             res.status(200).json({ok: 1});
                         }).catch(err => {
-                            console.log(err);
                             if (err.code === "ConditionalCheckFailedException") {
                                 res.json({
                                     err: {

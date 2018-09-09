@@ -1,17 +1,13 @@
-const bcrypt = require("bcrypt"),
+const bcrypt = require("bcryptjs"),
     express = require("express"),
     jwt = require("jsonwebtoken"),
     config = require("../config");
 
 module.exports = (req, res, next) => {
-    console.log(req.body);
 
     if(req.hasOwnProperty("body") && req.body.hasOwnProperty("token")) {
         jwt.verify(req.body.token, config.secret, (err, decoded) => {
             if(err) {
-                console.log("auth failed");
-                console.log(err);
-                console.log(decoded);
                 res.status(401).json({
                     err: {
                         code: "unauthorized"
@@ -20,10 +16,9 @@ module.exports = (req, res, next) => {
             }
             else {
                 req.token = decoded;
-                console.log(decoded);
 
                 if(decoded.role === "provider" && req.body.hasOwnProperty("username")) {
-                    if(decoded.hasOwnProperty("patients") && patients.indexOf(req.body.username.toLowerCase())) {
+                    if(decoded.hasOwnProperty("patients") && decoded.patients.indexOf(req.body.username.toLowerCase())) {
                         next();
                     }
                     else {
